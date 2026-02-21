@@ -6,10 +6,10 @@
   const BRAND_SUBTITLE = "Projects • notes • practical guides • hands-on work";
 
   const navItems = [
-    { href: "https://ashkiani.com", label: "Apex · Directory" },
     { href: "./", label: "Home" },
     { href: "./woodworking/", label: "Woodworking", disabled: true },
     { href: "./resume/", label: "Resume", disabled: true },
+    { href: "https://ashkiani.com", label: "Apex · Directory" }
   ];
 
   function normalizePath(path) {
