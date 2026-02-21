@@ -1,51 +1,65 @@
 (() => {
   const year = new Date().getFullYear();
 
-  // You can tweak these in ONE place later.
   const BRAND_TITLE = "Siavash Ashkiani";
   const BRAND_SUBTITLE = "Projects • notes • practical guides • hands-on work";
 
-  const navItems = [
-    { href: "./", label: "Home" },
-    { href: "./woodworking/", label: "Woodworking", disabled: true },
-    { href: "./resume/", label: "Resume", disabled: true },
-    { href: "https://ashkiani.com", label: "Apex · Directory" }
+  // Left side (site sections)
+  const navLeft = [
+    { href: "/", label: "Home" },
+    { href: "/woodworking/", label: "Woodworking", disabled: true },
+    { href: "/resume/", label: "Resume", disabled: true },
+  ];
+
+  // Right side (utilities / external)
+  const navRight = [
+    { href: "/contact", label: "Contact" },          // scrolls to Contact card
+    { href: "https://ashkiani.com", label: "Apex · Directory" },
   ];
 
   function normalizePath(path) {
-    // Treat /projects and /projects/ as same.
     if (!path.endsWith("/")) return path + "/";
     return path;
   }
 
-    function renderNav() {
+  function renderNavGroup(items, current) {
+    return items
+      .map((item) => {
+        const hrefNorm = normalizePath(item.href);
+        const isActive = !item.disabled && current === hrefNorm;
+
+        if (item.disabled) {
+          return `
+            <span class="nav-link nav-link-disabled" aria-disabled="true">
+              ${item.label}
+            </span>
+          `;
+        }
+
+        return `
+          <a class="nav-link${isActive ? " is-active" : ""}" href="${item.href}">
+            ${item.label}
+          </a>
+        `;
+      })
+      .join("");
+  }
+
+  function renderNav() {
     const current = normalizePath(window.location.pathname);
 
     return `
-        <nav class="nav" aria-label="Primary">
-        ${navItems
-            .map((item) => {
-            const href = normalizePath(item.href);
-            const isActive = !item.disabled && current === href;
+      <nav class="nav" aria-label="Primary">
+        <div class="nav-left">
+          ${renderNavGroup(navLeft, current)}
+        </div>
 
-            if (item.disabled) {
-                return `
-                <span class="nav-link nav-link-disabled" aria-disabled="true">
-                    ${item.label}
-                </span>
-                `;
-            }
-
-            return `
-                <a class="nav-link${isActive ? " is-active" : ""}" href="${item.href}">
-                ${item.label}
-                </a>
-            `;
-            })
-            .join("")}
-        </nav>
+        <div class="nav-right">
+          ${renderNavGroup(navRight, current)}
+        </div>
+      </nav>
     `;
-    }
+  }
 
   function renderHeader() {
     return `

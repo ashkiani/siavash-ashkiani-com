@@ -109,6 +109,14 @@ p{ margin:10px 0; color: var(--muted); line-height:1.55; }
 .nav{
   margin-top: 14px;
   display: flex;
+  align-items: center;
+  justify-content: space-between; /* pushes right group to the right */
+  gap: 10px;
+}
+
+.nav-left,
+.nav-right{
+  display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
