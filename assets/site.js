@@ -63,19 +63,19 @@
 
   function renderHeader() {
     return `
-      <header class="wrap">
-        <div class="brand">
-          <div class="mark" aria-hidden="true">
-            <span class="prompt">&gt;</span><span class="cursor">_</span>
-          </div>
-          <div class="brand-text">
-            <div class="title">${BRAND_TITLE}</div>
-            <div class="subtitle">${BRAND_SUBTITLE}</div>
+    <header class="wrap">
+      <div class="brand">
+        <div class="brand-text">
+          <div class="title">${BRAND_TITLE}</div>
+          <div class="subtitle">${BRAND_SUBTITLE}</div>
+          <div class="prompt-line" aria-hidden="true">
+            <span class="prompt-symbol">&gt;</span><span class="cursor">_</span>
           </div>
         </div>
-        ${renderNav()}
-      </header>
-    `;
+      </div>
+      ${renderNav()}
+    </header>
+  `;
   }
 
   function renderFooter() {

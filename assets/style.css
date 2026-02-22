@@ -53,16 +53,15 @@ header.wrap {
   gap: 14px;
 }
 
-.mark {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-
+.prompt-line {
+  margin-top: 6px;
+  margin-bottom: 12px;
+  /* space before nav */
   font-family: var(--mono);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-
-  color: #7aa2ff;
+  color: rgba(122, 162, 255, 0.85);
+  line-height: 1;
 }
 
 .cursor {
@@ -72,6 +71,12 @@ header.wrap {
 @keyframes blink {
   50% {
     opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor {
+    animation: none;
   }
 }
 
