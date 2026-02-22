@@ -39,6 +39,33 @@
             </section>
 
             <section class="card">
+                <h3>How SHA-256 turns your input into a digest</h3>
+                <p class="muted">
+                    SHA-256 is a <strong>hash function</strong>: it takes an input of any length and produces a
+                    fixed-size
+                    <strong>256-bit</strong> output (usually shown as <strong>64 hex characters</strong>).
+                    Small input changes cause large, unpredictable output changes (“avalanche effect”).
+                </p>
+
+                <p class="muted">
+                    Internally, SHA-256 processes the message in a pipeline:
+                </p>
+
+                <ol class="muted" style="margin-top:10px">
+                    <li><strong>Encode to bytes</strong> (because hashing works on bytes, not characters).</li>
+                    <li><strong>Pad</strong> so the length becomes a clean multiple of 512 bits.</li>
+                    <li><strong>Split into 512-bit blocks</strong> (64 bytes each) and process them one by one.</li>
+                    <li><strong>For each block:</strong> build a 64-word schedule W[0..63] and run 64 compression
+                        rounds.</li>
+                    <li><strong>Combine</strong> the final internal state into the 256-bit digest.</li>
+                </ol>
+
+                <p class="muted" style="margin-top:10px">
+                    This page shows every stage <em>live</em>. Use “Inspect block” and “Inspect round” to zoom in.
+                </p>
+            </section>
+
+            <section class="card">
                 <div class="controls">
                     <label class="control" style="flex:1; min-width:240px">
                         <span class="control-label">Input</span>
@@ -80,7 +107,12 @@
 
             <section class="card">
                 <h3>Output digest (updates as you type)</h3>
-
+                <p class="muted">
+                    The digest shown here is the final 256-bit result after processing <em>all</em> blocks. “WebCrypto
+                    verification”
+                    is included so you can confirm the playground is computing the same SHA-256 as your browser’s
+                    built-in implementation.
+                </p>
                 <div class="io-grid" style="margin-top:12px">
                     <div>
                         <div class="kpi">
@@ -109,7 +141,18 @@
 
             <section class="card">
                 <h3>1) Raw bytes</h3>
-
+                <p class="muted">
+                    SHA-256 operates on <strong>bytes</strong>. If you type normal text, the browser converts it to
+                    <strong>UTF-8</strong>
+                    bytes first. The same visible text can produce different bytes under different encodings, which is
+                    why “bytes” is the
+                    real input to the hash function.
+                </p>
+                <p class="muted">
+                    If you enable <strong>Treat input as hex bytes</strong>, your input is interpreted as raw bytes
+                    (e.g. <span class="mono">61 62 63</span>)
+                    instead of text. This is useful when you want to hash binary data or test exact byte sequences.
+                </p>
                 <div class="kpi-grid" style="margin-top:12px">
                     <div class="kpi">
                         <div class="kpi-label">Byte length</div>
@@ -139,7 +182,14 @@
                     message length is
                     56 mod 64, then appends the original bit-length as 8 bytes (big-endian).
                 </p>
-
+                <p class="muted">
+                    Why padding exists: SHA-256 must end on an exact <strong>512-bit boundary</strong> because the
+                    algorithm processes fixed-size
+                    blocks. The “56 mod 64” rule reserves the last <strong>8 bytes</strong> of the final block for the
+                    length field.
+                    That length field prevents different messages from accidentally producing the same padded
+                    representation.
+                </p>
                 <div class="legend" style="margin-top:10px">
                     <span class="legend-item"><span class="swatch sw80"></span> 0x80 byte</span>
                     <span class="legend-item"><span class="swatch swln"></span> length field</span>
@@ -151,7 +201,17 @@
             <section class="card">
                 <h3>3) 512-bit blocks</h3>
                 <p class="muted">
-                    Each block is 64 bytes. Select a block above to inspect its schedule and rounds.
+                    After padding, the message is split into <strong>512-bit blocks</strong> (64 bytes each). SHA-256
+                    processes these blocks
+                    <strong>in order</strong>. Each block updates an internal 256-bit state, and the next block starts
+                    from that updated state
+                    (this is called <strong>chaining</strong>).
+                </p>
+                <p class="muted">
+                    “Total blocks” above tells you how many blocks your padded message contains. For short inputs, it’s
+                    usually 1 block.
+                    Longer inputs become multiple blocks, and the final digest depends on <em>all</em> blocks in
+                    sequence.
                 </p>
                 <div id="blocks"></div>
             </section>
@@ -159,16 +219,38 @@
             <section class="card">
                 <h3>4) Message schedule W[0..63] (selected block)</h3>
                 <p class="muted">
-                    W[0..15] come from the block’s 16 big-endian 32-bit words. W[16..63] are expanded from earlier
-                    words.
-                    Click a cell to jump to that round.
+                    Each 512-bit block is first viewed as <strong>16 words</strong> of 32 bits (W[0..15]). SHA-256 then
+                    expands them into
+                    a <strong>64-word message schedule</strong> W[0..63]. This expansion mixes earlier words so that
+                    each round depends on
+                    more than just a single part of the input (increasing <strong>diffusion</strong>).
+                </p>
+                <p class="muted">
+                    Each compression round uses one schedule word W[t]. Click a cell to jump directly to that round.
                 </p>
                 <div id="wGrid" class="wgrid"></div>
             </section>
 
             <section class="card">
                 <h3>5) Compression round (selected block, selected round)</h3>
-
+                <p class="muted">
+                    This is the core of SHA-256. For the selected block, SHA-256 runs <strong>64 rounds</strong>. In
+                    each round, it updates
+                    eight 32-bit working registers: <span class="mono">a b c d e f g h</span>.
+                </p>
+                <p class="muted">
+                    Conceptually, each round:
+                    (1) combines the current state with the schedule word <span class="mono">W[t]</span> and a fixed
+                    constant <span class="mono">K[t]</span>,
+                    (2) computes two temporary values <span class="mono">T1</span> and <span class="mono">T2</span>,
+                    and (3) shifts/mixes the registers to form the next state.
+                    These repeated mixing steps are what produce the “random-looking” digest.
+                </p>
+                <p class="muted">
+                    Use “Inspect round t” to step through rounds. The “Before/After” boxes show how the internal state
+                    changes.
+                    The “Round formulas” box shows the exact computed intermediate values for that round.
+                </p>
                 <div class="controls" style="margin-top:10px">
                     <div class="kpi" style="flex:1; min-width:240px">
                         <div class="kpi-label">Round</div>
