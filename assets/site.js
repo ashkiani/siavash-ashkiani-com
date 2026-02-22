@@ -65,7 +65,9 @@
     return `
       <header class="wrap">
         <div class="brand">
-          <div class="mark" aria-hidden="true"></div>
+          <div class="mark" aria-hidden="true">
+            <span class="prompt">&gt;</span><span class="cursor">_</span>
+          </div>
           <div class="brand-text">
             <div class="title">${BRAND_TITLE}</div>
             <div class="subtitle">${BRAND_SUBTITLE}</div>
