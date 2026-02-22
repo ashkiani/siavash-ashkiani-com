@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="author" content="Siavash Ashkiani" />
+    <meta name="description"
+        content="Interactive SHA-256 playground: input -> bytes -> padding -> blocks -> rounds -> digest." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://siavash.ashkiani.com/labs/crypto/sha256/" />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+
+    <title>SHA-256 Playground · Crypto Lab</title>
+
+    <link rel="stylesheet" href="/assets/style.css" />
+    <link rel="stylesheet" href="/labs/assets/style.css" />
+</head>
+
+<body>
+    <div class="bg"></div>
+    <div class="page">
+        <div id="site-header"></div>
+
+        <main class="wrap">
+            <section class="card">
+                <div class="crumbs">
+                    <a href="/labs/">Labs</a> <span class="muted">/</span>
+                    <a href="/labs/crypto/">Crypto</a> <span class="muted">/</span>
+                    <span>SHA-256</span>
+                </div>
+
+                <h2>SHA-256 Playground (end-to-end)</h2>
+                <p class="muted">
+                    Type into the input box: the SHA-256 digest updates instantly, and this page shows the exact
+                    intermediate values (bytes, padding, blocks, message schedule, and rounds).
+                </p>
+            </section>
+
+            <section class="card">
+                <div class="controls">
+                    <label class="control" style="flex:1; min-width:240px">
+                        <span class="control-label">Input</span>
+                        <textarea id="input" class="textarea" rows="4" placeholder="Type text…"></textarea>
+                    </label>
+
+                    <div style="display:flex; flex-direction:column; gap:10px">
+                        <label class="control control-toggle">
+                            <input id="treatAsHex" type="checkbox" />
+                            <span>Treat input as hex bytes</span>
+                        </label>
+
+                        <label class="control control-toggle">
+                            <input id="showAscii" type="checkbox" checked />
+                            <span>Show ASCII hint</span>
+                        </label>
+
+                        <label class="control">
+                            <span class="control-label">Inspect block</span>
+                            <select id="blockSelect" class="control-input"></select>
+                        </label>
+
+                        <label class="control">
+                            <span class="control-label">Inspect round t</span>
+                            <input id="roundRange" class="control-input" type="range" min="0" max="63" value="0" />
+                            <span id="roundValue" class="mono">0</span>
+                        </label>
+
+                        <div style="display:flex; gap:10px; flex-wrap:wrap">
+                            <button id="stepBack" class="btn" type="button">◀︎</button>
+                            <button id="stepFwd" class="btn" type="button">▶︎</button>
+                            <button id="runFull" class="btn" type="button">Jump to round 63</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="inputError" class="hint" style="margin-top:10px; display:none"></div>
+            </section>
+
+            <section class="card">
+                <h3>Output digest (updates as you type)</h3>
+
+                <div class="io-grid" style="margin-top:12px">
+                    <div>
+                        <div class="kpi">
+                            <div class="kpi-label">Digest (this playground)</div>
+                            <div class="hash-row">
+                                <div id="digestLocal" class="kpi-value mono hash"></div>
+                                <button id="copyLocal" class="btn btn-sm" type="button">Copy</button>
+                            </div>
+                            <div class="kpi-sub muted">Computed by the same code that produces the intermediate values
+                                below.</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="kpi">
+                            <div class="kpi-label">Digest (WebCrypto verification)</div>
+                            <div class="hash-row">
+                                <div id="digestWeb" class="kpi-value mono hash"></div>
+                                <button id="copyWeb" class="btn btn-sm" type="button">Copy</button>
+                            </div>
+                            <div class="kpi-sub muted">Browser built-in SHA-256 (sanity check).</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h3>1) Raw bytes</h3>
+
+                <div class="kpi-grid" style="margin-top:12px">
+                    <div class="kpi">
+                        <div class="kpi-label">Byte length</div>
+                        <div class="kpi-value mono" id="rawLenBytes">—</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Bit length</div>
+                        <div class="kpi-value mono" id="rawLenBits">—</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Total blocks</div>
+                        <div class="kpi-value mono" id="blockCount">—</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Length field (8 bytes)</div>
+                        <div class="kpi-value mono" id="lenField">—</div>
+                    </div>
+                </div>
+
+                <div class="mono bytes" id="rawBytes" style="margin-top:14px"></div>
+            </section>
+
+            <section class="card">
+                <h3>2) Padding</h3>
+                <p class="muted">
+                    SHA-256 appends <span class="mono">0x80</span>, then <span class="mono">0x00</span> until the
+                    message length is
+                    56 mod 64, then appends the original bit-length as 8 bytes (big-endian).
+                </p>
+
+                <div class="legend" style="margin-top:10px">
+                    <span class="legend-item"><span class="swatch sw80"></span> 0x80 byte</span>
+                    <span class="legend-item"><span class="swatch swln"></span> length field</span>
+                </div>
+
+                <div class="mono bytes" id="paddedBytes" style="margin-top:14px"></div>
+            </section>
+
+            <section class="card">
+                <h3>3) 512-bit blocks</h3>
+                <p class="muted">
+                    Each block is 64 bytes. Select a block above to inspect its schedule and rounds.
+                </p>
+                <div id="blocks"></div>
+            </section>
+
+            <section class="card">
+                <h3>4) Message schedule W[0..63] (selected block)</h3>
+                <p class="muted">
+                    W[0..15] come from the block’s 16 big-endian 32-bit words. W[16..63] are expanded from earlier
+                    words.
+                    Click a cell to jump to that round.
+                </p>
+                <div id="wGrid" class="wgrid"></div>
+            </section>
+
+            <section class="card">
+                <h3>5) Compression round (selected block, selected round)</h3>
+
+                <div class="controls" style="margin-top:10px">
+                    <div class="kpi" style="flex:1; min-width:240px">
+                        <div class="kpi-label">Round</div>
+                        <div class="kpi-value mono" id="roundMeta">t=0</div>
+                        <div class="kpi-sub mono" id="roundMeta2">W[t]=— K[t]=—</div>
+                        <div class="kpi-sub mono" id="roundMeta3">T1=— T2=—</div>
+                    </div>
+
+                    <div class="kpi" style="flex:1; min-width:240px">
+                        <div class="kpi-label">Click a register</div>
+                        <div class="kpi-value mono" id="regTitle">—</div>
+                        <div class="kpi-sub mono" id="regExplain">Click any a..h box to see how it updates.</div>
+                        <div class="kpi-sub mono" id="regExplain2"></div>
+                    </div>
+                </div>
+
+                <div class="viz-grid" style="margin-top:14px">
+                    <div class="card-inner">
+                        <h4>Before round</h4>
+                        <div id="regsBefore" class="regs"></div>
+                    </div>
+
+                    <div class="card-inner">
+                        <h4>After round</h4>
+                        <div id="regsAfter" class="regs"></div>
+                    </div>
+                </div>
+
+                <div class="card-inner" style="margin-top:14px">
+                    <h4>Round formulas (exact)</h4>
+                    <div class="mono pre" id="formulaBox"></div>
+                </div>
+            </section>
+        </main>
+
+        <div id="site-footer"></div>
+    </div>
+
+    <script defer src="/assets/site.js"></script>
+    <script defer src="./sha256.js"></script>
+</body>
+
+</html>
