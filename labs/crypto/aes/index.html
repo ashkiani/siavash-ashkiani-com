@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="author" content="Siavash Ashkiani" />
+    <meta name="description"
+        content="Interactive AES-128 walkthrough: bytes -> blocks -> key schedule -> rounds -> ciphertext, with step-by-step visuals." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://siavash.ashkiani.com/labs/crypto/aes/" />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <title>AES-128 Walkthrough · Crypto Lab</title>
+
+    <link rel="stylesheet" href="/assets/style.css" />
+    <link rel="stylesheet" href="/labs/assets/style.css" />
+</head>
+
+<body>
+    <div class="bg"></div>
+    <div class="page">
+        <div id="site-header"></div>
+
+        <main class="wrap">
+            <section class="card">
+                <div class="crumbs">
+                    <a href="/labs/">Labs</a> <span class="muted">/</span>
+                    <a href="/labs/crypto/">Crypto</a> <span class="muted">/</span>
+                    <span>AES</span>
+                </div>
+
+                <h2>AES-128 Walkthrough (end-to-end, step-by-step)</h2>
+                <p class="muted">
+                    AES is a <strong>block cipher</strong>: it encrypts data in <strong>16-byte blocks</strong> using a
+                    <strong>16-byte key</strong>.
+                    This page teaches AES by walking through every transformation in order and showing the exact
+                    intermediate values.
+                </p>
+            </section>
+
+            <section class="card">
+                <h3>How to use this page</h3>
+                <ol class="muted" style="margin-top:10px">
+                    <li>Type an input (text or hex bytes). The ciphertext updates immediately.</li>
+                    <li>Use <strong>Next</strong> / <strong>Back</strong> to move through the AES steps in order (no
+                        hunting).</li>
+                    <li>Click any byte in the 4×4 state to focus the explanation on that byte (especially useful for
+                        MixColumns).</li>
+                </ol>
+                <p class="muted" style="margin-top:10px">
+                    This walkthrough uses <strong>AES-128 in ECB</strong> mode (one block at a time) because it’s the
+                    clearest way to teach
+                    the core AES round function. (Real systems typically use CBC/CTR/GCM, etc.)
+                </p>
+            </section>
+
+            <section class="card">
+                <h3>Inputs</h3>
+
+                <div class="controls">
+                    <label class="control" style="flex:1; min-width:260px">
+                        <span class="control-label">Input</span>
+                        <textarea id="input" class="textarea" rows="4"
+                            placeholder="Type text (UTF-8) or enable hex mode…"></textarea>
+                    </label>
+
+                    <div style="display:flex; flex-direction:column; gap:10px; min-width:280px">
+                        <label class="control control-toggle">
+                            <input id="treatAsHex" type="checkbox" />
+                            <span>Treat input as hex bytes</span>
+                        </label>
+
+                        <label class="control control-toggle">
+                            <input id="pkcs7" type="checkbox" checked />
+                            <span>PKCS#7 padding (last block)</span>
+                        </label>
+
+                        <label class="control">
+                            <span class="control-label">Key (AES-128 = 16 bytes = 32 hex chars)</span>
+                            <input id="keyHex" class="control-input mono" type="text"
+                                placeholder="00112233445566778899aabbccddeeff" />
+                        </label>
+
+                        <div style="display:flex; gap:10px; flex-wrap:wrap">
+                            <button id="loadVector" class="btn" type="button">Load NIST test vector</button>
+                            <button id="prevBlock" class="btn" type="button">◀︎ Prev block</button>
+                            <button id="nextBlock" class="btn" type="button">Next block ▶︎</button>
+                        </div>
+
+                        <div class="hint mono" id="inputError" style="display:none"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h3>Output (updates as you type)</h3>
+                <p class="muted">
+                    This is the full output for all blocks (ECB). The walkthrough below focuses on the selected block.
+                </p>
+
+                <div class="io-grid" style="margin-top:12px">
+                    <div>
+                        <div class="kpi">
+                            <div class="kpi-label">Ciphertext (hex)</div>
+                            <div class="hash-row">
+                                <div id="outHex" class="kpi-value mono hash"></div>
+                                <button id="copyOut" class="btn btn-sm" type="button">Copy</button>
+                            </div>
+                            <div class="kpi-sub muted">AES-128 ECB (teaching mode).</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="kpi">
+                            <div class="kpi-label">Self-check (only for NIST vector)</div>
+                            <div id="vectorCheck" class="kpi-value mono">—</div>
+                            <div class="kpi-sub muted">Loads a known-answer test so you can verify correctness.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h3>Bytes, blocks, and padding</h3>
+                <p class="muted">
+                    AES consumes 16-byte blocks. If the input is not a multiple of 16, PKCS#7 padding can be added to
+                    fill the last block.
+                </p>
+
+                <div class="kpi-grid" style="margin-top:12px">
+                    <div class="kpi">
+                        <div class="kpi-label">Input byte length</div>
+                        <div class="kpi-value mono" id="inLenBytes">—</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Padded length</div>
+                        <div class="kpi-value mono" id="paddedLenBytes">—</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Total blocks</div>
+                        <div class="kpi-value mono" id="blockCount">—</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Selected block</div>
+                        <div class="kpi-value mono" id="blockMeta">—</div>
+                    </div>
+                </div>
+
+                <div class="mono bytes" id="rawBytes" style="margin-top:14px"></div>
+            </section>
+
+            <section class="card">
+                <h3>Guided walkthrough (AES in order)</h3>
+                <p class="muted">
+                    This is the core: it shows the <strong>exact input and output</strong> for each step, in the correct
+                    sequence.
+                    Use <strong>Next</strong> / <strong>Back</strong> to progress through AES.
+                </p>
+
+                <div class="walkbar" style="margin-top:12px">
+                    <div class="mono" id="walkMeta">—</div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap">
+                        <button id="walkBack" class="btn" type="button">◀︎ Back</button>
+                        <button id="walkNext" class="btn" type="button">Next ▶︎</button>
+                        <button id="walkReset" class="btn" type="button">Reset</button>
+                    </div>
+                </div>
+
+                <div class="viz-grid" style="margin-top:14px">
+                    <div class="card-inner">
+                        <h4>Before</h4>
+                        <div id="walkBefore" class="state-grid"></div>
+                    </div>
+                    <div class="card-inner">
+                        <h4>After</h4>
+                        <div id="walkAfter" class="state-grid"></div>
+                    </div>
+                </div>
+
+                <div class="card-inner" style="margin-top:14px">
+                    <h4>What is happening in this step</h4>
+                    <div class="mono pre" id="walkExplain"></div>
+                </div>
+
+                <div class="hint muted" style="margin-top:10px">
+                    Tip: click a byte in either matrix to focus the explanation on that byte (especially in MixColumns).
+                </div>
+            </section>
+
+            <section class="card">
+                <h3>Key expansion (RoundKey[0..10])</h3>
+                <p class="muted">
+                    AES-128 expands the original 16-byte key into <strong>11 round keys</strong>. Each AddRoundKey uses
+                    one.
+                </p>
+                <div id="roundKeys" class="rkgrid"></div>
+            </section>
+        </main>
+
+        <div id="site-footer"></div>
+    </div>
+
+    <script defer src="/assets/site.js"></script>
+    <script defer src="./aes.js"></script>
+</body>
+
+</html>

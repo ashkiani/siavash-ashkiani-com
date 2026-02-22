@@ -247,3 +247,55 @@
   font-size: 13px;
   white-space: nowrap;
 }
+
+/* AES walkthrough visuals */
+.state-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.bytebox {
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.03);
+  padding: 10px 10px;
+  user-select: none;
+  text-align: center;
+  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+.bytebox:hover { transform: translateY(-1px); background: rgba(255,255,255,0.05); }
+.bytebox.is-active { border-color: rgba(122,162,255,0.55); background: rgba(122,162,255,0.12); }
+
+.bytebox .bhex { font-size: 14px; }
+.bytebox .pos { margin-top: 6px; font-size: 12px; opacity: 0.75; }
+
+.walkbar{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.rkgrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.rkrow {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.02);
+}
+
+.rkrow .rklabel { font-weight: 800; opacity: 0.9; }
+.rkrow .rkval { overflow-wrap: anywhere; word-break: break-word; line-height: 1.5; }
