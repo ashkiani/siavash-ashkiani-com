@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="author" content="Siavash Ashkiani" />
+    <meta name="description" content="Caesar cipher playground with live alphabet mapping (English + Farsi)." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://siavash.ashkiani.com/labs/crypto/caesar/" />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <title>Caesar Cipher · Crypto Lab</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+    <link rel="stylesheet" href="/labs/assets/style.css" />
+</head>
+
+<body>
+    <div class="bg"></div>
+    <div class="page">
+        <div id="site-header"></div>
+
+        <main class="wrap">
+            <section class="card">
+                <div class="crumbs">
+                    <a href="/labs/">Labs</a> <span class="muted">/</span>
+                    <a href="/labs/crypto/">Crypto</a> <span class="muted">/</span>
+                    <span>Caesar</span>
+                </div>
+
+                <h2>Caesar Cipher</h2>
+                <p class="muted">
+                    Shift each letter by a fixed offset. This playground shows the mapping live: two alphabets,
+                    the shifted alignment, and per-character highlighting as you type.
+                </p>
+            </section>
+
+            <section class="card">
+                <div class="controls">
+                    <label class="control">
+                        <span class="control-label">Mode</span>
+                        <select id="modeSelect" class="control-input">
+                            <option value="enc">Encrypt</option>
+                            <option value="dec">Decrypt</option>
+                        </select>
+                    </label>
+                    <label class="control">
+                        <span class="control-label">Alphabet</span>
+                        <select id="alphaSelect" class="control-input">
+                            <option value="en">English (A–Z)</option>
+                            <option value="fa">Farsi (فارسی)</option>
+                        </select>
+                    </label>
+
+                    <label class="control">
+                        <span class="control-label">Shift</span>
+                        <input id="shiftRange" class="control-input" type="range" min="0" max="25" value="3" />
+                        <span id="shiftValue" class="mono">3</span>
+                    </label>
+
+                    <label class="control control-toggle">
+                        <input id="preserveCase" type="checkbox" checked />
+                        <span>Preserve case (English)</span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="io-grid">
+                    <div>
+                        <h3>Input</h3>
+                        <textarea id="plain" class="textarea" rows="5" placeholder="Type here…"></textarea>
+                    </div>
+                    <div>
+                        <h3>Output</h3>
+                        <textarea id="cipher" class="textarea" rows="5" placeholder="Result…" readonly></textarea>
+                    </div>
+                </div>
+
+                <div class="hint muted">
+                    Tip: click inside the input and move your cursor — the highlight follows the character at the caret.
+                </div>
+            </section>
+
+            <section class="card">
+                <h3>Alphabet mapping</h3>
+                <div id="mapping" class="mapping"></div>
+            </section>
+        </main>
+
+        <div id="site-footer"></div>
+    </div>
+
+    <script defer src="/assets/site.js"></script>
+    <script defer src="./caesar.js"></script>
+</body>
+
+</html>

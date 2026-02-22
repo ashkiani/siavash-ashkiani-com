@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="author" content="Siavash Ashkiani" />
+  <meta name="description" content="Crypto playgrounds and visual explainers." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://siavash.ashkiani.com/labs/crypto/" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <title>Crypto Lab · Siavash Ashkiani</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/labs/assets/style.css" />
+</head>
+
+<body>
+  <div class="bg"></div>
+  <div class="page">
+    <div id="site-header"></div>
+
+    <main class="wrap">
+      <section class="card">
+        <h2>Crypto Lab</h2>
+        <p>
+          Concrete visuals over hand-wavy explanations.
+          Pick a module and poke at it.
+        </p>
+      </section>
+
+      <section class="card">
+        <h3>Classical ciphers</h3>
+        <div class="lab-grid">
+          <a class="lab-tile" href="/labs/crypto/caesar/">
+            <div class="lab-title">Caesar cipher</div>
+            <div class="lab-desc">Shift mapping with live alphabet alignment + per-character highlight.</div>
+          </a>
+
+          <a class="lab-tile lab-tile-disabled" aria-disabled="true">
+            <div class="lab-title">Atbash</div>
+            <div class="lab-desc">Mirror mapping visualizer (coming soon).</div>
+          </a>
+        </div>
+      </section>
+
+      <section class="card subtle">
+        <h3>Modern crypto</h3>
+        <div class="lab-grid">
+          <a class="lab-tile lab-tile-disabled" aria-disabled="true">
+            <div class="lab-title">SHA-256</div>
+            <div class="lab-desc">Input → padding → blocks → compression (visual pipeline, coming soon).</div>
+          </a>
+
+          <a class="lab-tile lab-tile-disabled" aria-disabled="true">
+            <div class="lab-title">AES</div>
+            <div class="lab-desc">State matrix + SubBytes/ShiftRows/MixColumns (step-by-step, coming soon).</div>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <div id="site-footer"></div>
+  </div>
+
+  <script defer src="/assets/site.js"></script>
+</body>
+
+</html>

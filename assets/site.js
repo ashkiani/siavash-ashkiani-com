@@ -8,6 +8,7 @@
   const navLeft = [
     { href: "/", label: "Home" },
     { href: "/woodworking/", label: "Woodworking", disabled: true },
+    { href: "/labs/", label: "Labs" },
     { href: "/resume/", label: "Resume", disabled: true },
   ];
 
