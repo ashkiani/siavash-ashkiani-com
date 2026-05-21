@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="dark light" />
   <meta name="author" content="Siavash Ashkiani" />
   <meta name="description"
-    content="A local-first NVR privacy lab: isolating a camera recorder from the internet while keeping local live view and playback/export usable." />
+    content="A local-first NVR privacy lab: isolating a camera recorder in a VLAN while keeping live view and playback/export usable through a trusted dashboard host." />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://siavash.ashkiani.com/labs/privacy/nvr-dashboard/" />
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
@@ -25,16 +25,19 @@
       <section class="card lab-hero">
         <div class="crumbs">
           <a href="/labs/">Labs</a> <span class="muted">/</span>
-          <span>Privacy</span> <span class="muted">/</span>
+          <a href="/labs/privacy/">Privacy</a> <span class="muted">/</span>
           <span>Local-First NVR Dashboard</span>
         </div>
 
-        <p class="eyebrow">Network privacy · cameras · Raspberry Pi · RTSP</p>
+        <p class="eyebrow">Network privacy · cameras · VLANs · Raspberry Pi · RTSP</p>
         <h1>Jailing an NVR: a local-first camera dashboard experiment</h1>
         <p class="muted lead">
           Security cameras are supposed to help protect a property. This lab explores a practical question:
           can an NVR keep doing its local recording job while being blocked from talking to the internet?
         </p>
+        <div class="lab-links">
+          <a class="btn" href="https://github.com/ashkiani/nvr" rel="noopener">View the NVR dashboard repository →</a>
+        </div>
       </section>
 
       <section class="card">
@@ -46,11 +49,16 @@
           talk to the outside world to do the job I bought it for?
         </p>
         <p class="muted">
-          A related news story caught my attention a while back. Investigators reportedly recovered doorbell/camera
-          footage in a missing-person case even though the owner had not signed up for cloud storage. In that specific
-          case, I am glad the footage helped. But from a privacy point of view, the interesting part is not whether the
-          outcome was good or bad. It is that video data may leave the local network in ways the owner may not fully
-          understand.
+          A related story caught my attention. TechRadar covered a missing-person case where authorities recovered
+          Nest doorbell footage even though the camera owner reportedly was not a Nest Aware subscriber. In that case,
+          I am grateful the footage helped investigators. The privacy question is still worth asking, though: if camera
+          data can exist outside the owner's direct control, even temporarily or unexpectedly, users should understand
+          that tradeoff.
+        </p>
+        <p class="muted source-note">
+          Reference: <a
+            href="https://www.techradar.com/home/home-security/how-did-authorities-retrieve-seemingly-inaccessible-video-doorbell-cam-footage-in-the-nancy-guthrie-case-and-the-questions-it-raises-about-your-nest-cam-account"
+            rel="noopener">TechRadar: questions around recovered Nest doorbell footage</a>.
         </p>
         <p class="muted">
           That led me to this experiment: keep the NVR useful locally, but prevent it from calling home.
@@ -58,36 +66,56 @@
       </section>
 
       <section class="card">
-        <h2>The idea: jail the NVR, add a trusted local dashboard</h2>
+        <h2>The idea: jail the NVR VLAN, add a trusted dashboard host</h2>
         <p class="muted">
-          The basic pattern is simple: the NVR remains on the local network and records the cameras, but firewall or
-          routing rules prevent it from reaching the internet. A small trusted device, such as a Raspberry Pi, also sits
-          on the local network and provides the features I actually need from inside the LAN.
+          The pattern I am experimenting with is not just “block one device.” It is closer to a small network design:
+          put the NVR and cameras on a restricted VLAN, block that VLAN from reaching the internet, and allow only a
+          trusted host, such as a Raspberry Pi, mini PC, or VM, to talk to the NVR. Then selected internal VLANs, or a
+          VPN-connected client, can access the dashboard instead of talking directly to the NVR.
         </p>
 
         <figure class="lab-figure">
           <img src="/labs/privacy/assets/nvr-local-first-architecture.png"
-            alt="Rough network sketch showing cameras connected to an NVR, the NVR isolated from the internet, and a Raspberry Pi dashboard on the local network." />
+            alt="Architecture diagram showing cameras and an NVR in an isolated camera VLAN, with NVR outbound internet access blocked, a Raspberry Pi dashboard allowed to reach the NVR, selected client VLANs allowed to reach the dashboard, and optional VPN access." />
           <figcaption>
-            Rough sketch for the local-first design. The final diagram will be cleaned up later, but the important idea is
-            that the NVR can serve the LAN while outbound internet access is blocked.
+            The intended privacy model: the NVR can serve local streams/playback, but the camera VLAN cannot freely talk
+            to the internet. The dashboard host becomes the controlled middle layer.
           </figcaption>
         </figure>
 
         <div class="callout-grid">
           <div class="callout">
+            <div class="callout-title">Camera VLAN</div>
+            <p class="muted">Holds cameras, NVR, and the dashboard host. Outbound internet access is blocked.</p>
+          </div>
+          <div class="callout">
             <div class="callout-title">NVR</div>
-            <p class="muted">Records locally and serves camera streams/playback on the LAN.</p>
+            <p class="muted">Records locally and exposes compatible local endpoints for live view and playback.</p>
           </div>
           <div class="callout">
-            <div class="callout-title">Firewall / router</div>
-            <p class="muted">Allows local access but blocks the NVR from making outbound internet connections.</p>
+            <div class="callout-title">Dashboard host</div>
+            <p class="muted">The Raspberry Pi/mini PC talks to the NVR and serves a local web dashboard.</p>
           </div>
           <div class="callout">
-            <div class="callout-title">Raspberry Pi dashboard</div>
-            <p class="muted">Provides local live view, playback export, and temporary browser-friendly clips.</p>
+            <div class="callout-title">Client access</div>
+            <p class="muted">Selected VLANs, or VPN users, can reach the dashboard. The NVR itself stays isolated.</p>
           </div>
         </div>
+      </section>
+
+      <section class="card subtle">
+        <h2>Important compatibility note</h2>
+        <p class="muted">
+          This is not a universal NVR dashboard. The current code expects a system that exposes Lorex/Dahua-style local
+          RTSP paths. For example, live view and playback paths similar to:
+        </p>
+        <pre class="code-block"><code>/cam/realmonitor?channel=1&amp;subtype=1
+/cam/playback?channel=1&amp;subtype=0&amp;starttime=YYYY_MM_DD_HH_MM_SS&amp;endtime=YYYY_MM_DD_HH_MM_SS</code></pre>
+        <p class="muted">
+          If an NVR does not expose compatible local HTTP/RTSP endpoints, this dashboard will probably not work without
+          adapter code. Many camera systems use different URL formats, authentication behavior, codecs, or proprietary
+          APIs.
+        </p>
       </section>
 
       <section class="card">
@@ -98,19 +126,33 @@
         </p>
         <ul class="feature-list">
           <li>Shows selected camera streams in a browser on the local network.</li>
-          <li>Uses the NVR's RTSP interface from the server side, so credentials are not exposed in browser URLs.</li>
-          <li>Exports playback clips for a selected camera and time window.</li>
-          <li>Creates temporary files for browser playback or download.</li>
-          <li>Keeps the Raspberry Pi from becoming a second long-term NVR.</li>
+          <li>Uses the NVR's local RTSP/HTTP interfaces from the server side, so credentials are not exposed in browser URLs.</li>
+          <li>Searches and exports playback windows from one or more cameras.</li>
+          <li>Can combine short playback segments into one exported clip when the NVR stores recordings in chunks.</li>
+          <li>Creates temporary source exports and optional browser-friendly previews.</li>
+          <li>Includes system checks, progress feedback, logs, and storage cleanup helpers for small deployments.</li>
         </ul>
+        <div class="lab-links">
+          <a class="btn" href="https://github.com/ashkiani/nvr" rel="noopener">Open the repository →</a>
+          <a class="btn" href="https://raw.githubusercontent.com/ashkiani/nvr/main/docs/images/dashboard-home.png"
+            rel="noopener">View dashboard screenshot →</a>
+        </div>
+
+        <figure class="lab-figure lab-figure-compact">
+          <img src="https://raw.githubusercontent.com/ashkiani/nvr/main/docs/images/dashboard-home.png"
+            alt="Screenshot of the Private NVR Dashboard home page." />
+          <figcaption>
+            Current dashboard home page from the repository README. The UI may change as the project matures.
+          </figcaption>
+        </figure>
       </section>
 
       <section class="card subtle">
         <h2>The tradeoff</h2>
         <p class="muted">
           This approach is not right for every camera system. If your setup depends on cloud-backed features such as
-          object detection, motion alerts, human or vehicle detection, push notifications, or two-way audio, isolating the
-          NVR may disable some of those features.
+          object detection, motion alerts, human or vehicle detection, push notifications, app notifications, or two-way
+          audio, isolating the NVR may disable some of those features.
         </p>
         <p class="muted">
           That may make this a poor fit for a doorbell camera or any camera where cloud notifications and two-way talk are
@@ -122,9 +164,13 @@
       <section class="card">
         <h2>Security notes</h2>
         <p class="muted">
-          The dashboard is meant to be a local-only tool. The NVR credentials stay in a local configuration file, and the
-          dashboard should run as a dedicated low-privilege service account instead of a normal sudo-capable user. Exported
-          clips should be treated as temporary artifacts and cleaned up automatically.
+          The dashboard is meant to be a local-only tool. The NVR credentials stay in a local configuration file on the
+          dashboard host, and the dashboard should run as a dedicated low-privilege service account instead of a normal
+          sudo-capable user. Exported clips should be treated as temporary artifacts and cleaned up automatically.
+        </p>
+        <p class="muted">
+          If remote access is needed, the safer pattern is to connect to your own network through a VPN and then open the
+          dashboard. Do not expose the dashboard directly to the public internet.
         </p>
         <p class="muted">
           This is still a lab project, not a commercial product. The goal is to make the privacy model explicit and give
@@ -133,12 +179,14 @@
       </section>
 
       <section class="card">
-        <h2>Status</h2>
+        <h2>Project status</h2>
         <p class="muted">
-          I am cleaning up the code and documentation before making the repository public. Once it is ready, this page will
-          link to the repo and the README will point back here for the motivation, architecture, and tradeoffs.
+          The code is available on GitHub as a hobby/privacy project. The repository README contains the current setup
+          notes, compatibility assumptions, service-install instructions, troubleshooting notes, and dashboard screenshots.
         </p>
         <div class="lab-links">
+          <a class="btn" href="https://github.com/ashkiani/nvr" rel="noopener">GitHub: ashkiani/nvr →</a>
+          <a class="btn" href="/labs/privacy/">Back to Privacy Lab</a>
           <a class="btn" href="/labs/">Back to Labs</a>
         </div>
       </section>
