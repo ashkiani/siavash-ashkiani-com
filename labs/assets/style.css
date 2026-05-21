@@ -299,3 +299,74 @@
 
 .rkrow .rklabel { font-weight: 800; opacity: 0.9; }
 .rkrow .rkval { overflow-wrap: anywhere; word-break: break-word; line-height: 1.5; }
+/* Privacy / NVR article helpers */
+.lab-hero h1 {
+  margin-top: 6px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(122,162,255,0.90);
+}
+
+.lead {
+  font-size: 16px;
+}
+
+.lab-figure {
+  margin: 18px 0 8px;
+}
+
+.lab-figure img {
+  display: block;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.92);
+}
+
+.lab-figure figcaption {
+  margin-top: 10px;
+  color: var(--muted2);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.callout-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .callout-grid { grid-template-columns: 1fr; }
+}
+
+.callout {
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.03);
+  padding: 14px;
+}
+
+.callout-title {
+  font-weight: 800;
+  color: #7aa2ff;
+  margin-bottom: 6px;
+}
+
+.feature-list {
+  margin: 14px 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.feature-list li + li {
+  margin-top: 6px;
+}

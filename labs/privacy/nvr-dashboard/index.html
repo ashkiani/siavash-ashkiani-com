@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="author" content="Siavash Ashkiani" />
+  <meta name="description"
+    content="A local-first NVR privacy lab: isolating a camera recorder from the internet while keeping local live view and playback/export usable." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://siavash.ashkiani.com/labs/privacy/nvr-dashboard/" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <title>Local-First NVR Dashboard · Labs</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/labs/assets/style.css" />
+</head>
+
+<body>
+  <div class="bg"></div>
+  <div class="page">
+    <div id="site-header"></div>
+
+    <main class="wrap">
+      <section class="card lab-hero">
+        <div class="crumbs">
+          <a href="/labs/">Labs</a> <span class="muted">/</span>
+          <span>Privacy</span> <span class="muted">/</span>
+          <span>Local-First NVR Dashboard</span>
+        </div>
+
+        <p class="eyebrow">Network privacy · cameras · Raspberry Pi · RTSP</p>
+        <h1>Jailing an NVR: a local-first camera dashboard experiment</h1>
+        <p class="muted lead">
+          Security cameras are supposed to help protect a property. This lab explores a practical question:
+          can an NVR keep doing its local recording job while being blocked from talking to the internet?
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>The uncomfortable part</h2>
+        <p class="muted">
+          You buy a camera system to improve your security posture. Then you look at a packet capture from your
+          own network and notice the device is reaching out to places you did not expect. That does not automatically
+          mean something malicious is happening, but it does raise a fair privacy question: does this device need to
+          talk to the outside world to do the job I bought it for?
+        </p>
+        <p class="muted">
+          A related news story caught my attention a while back. Investigators reportedly recovered doorbell/camera
+          footage in a missing-person case even though the owner had not signed up for cloud storage. In that specific
+          case, I am glad the footage helped. But from a privacy point of view, the interesting part is not whether the
+          outcome was good or bad. It is that video data may leave the local network in ways the owner may not fully
+          understand.
+        </p>
+        <p class="muted">
+          That led me to this experiment: keep the NVR useful locally, but prevent it from calling home.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>The idea: jail the NVR, add a trusted local dashboard</h2>
+        <p class="muted">
+          The basic pattern is simple: the NVR remains on the local network and records the cameras, but firewall or
+          routing rules prevent it from reaching the internet. A small trusted device, such as a Raspberry Pi, also sits
+          on the local network and provides the features I actually need from inside the LAN.
+        </p>
+
+        <figure class="lab-figure">
+          <img src="/labs/privacy/assets/nvr-local-first-architecture.png"
+            alt="Rough network sketch showing cameras connected to an NVR, the NVR isolated from the internet, and a Raspberry Pi dashboard on the local network." />
+          <figcaption>
+            Rough sketch for the local-first design. The final diagram will be cleaned up later, but the important idea is
+            that the NVR can serve the LAN while outbound internet access is blocked.
+          </figcaption>
+        </figure>
+
+        <div class="callout-grid">
+          <div class="callout">
+            <div class="callout-title">NVR</div>
+            <p class="muted">Records locally and serves camera streams/playback on the LAN.</p>
+          </div>
+          <div class="callout">
+            <div class="callout-title">Firewall / router</div>
+            <p class="muted">Allows local access but blocks the NVR from making outbound internet connections.</p>
+          </div>
+          <div class="callout">
+            <div class="callout-title">Raspberry Pi dashboard</div>
+            <p class="muted">Provides local live view, playback export, and temporary browser-friendly clips.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>What the dashboard currently does</h2>
+        <p class="muted">
+          The current implementation is intentionally small. It is not trying to replace a full vendor app. It focuses on
+          the parts needed for a local security-camera workflow.
+        </p>
+        <ul class="feature-list">
+          <li>Shows selected camera streams in a browser on the local network.</li>
+          <li>Uses the NVR's RTSP interface from the server side, so credentials are not exposed in browser URLs.</li>
+          <li>Exports playback clips for a selected camera and time window.</li>
+          <li>Creates temporary files for browser playback or download.</li>
+          <li>Keeps the Raspberry Pi from becoming a second long-term NVR.</li>
+        </ul>
+      </section>
+
+      <section class="card subtle">
+        <h2>The tradeoff</h2>
+        <p class="muted">
+          This approach is not right for every camera system. If your setup depends on cloud-backed features such as
+          object detection, motion alerts, human or vehicle detection, push notifications, or two-way audio, isolating the
+          NVR may disable some of those features.
+        </p>
+        <p class="muted">
+          That may make this a poor fit for a doorbell camera or any camera where cloud notifications and two-way talk are
+          the main reason you bought it. But for a more traditional security-camera setup where the goal is simply to
+          record locally and review footage when needed, the tradeoff can make sense.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Security notes</h2>
+        <p class="muted">
+          The dashboard is meant to be a local-only tool. The NVR credentials stay in a local configuration file, and the
+          dashboard should run as a dedicated low-privilege service account instead of a normal sudo-capable user. Exported
+          clips should be treated as temporary artifacts and cleaned up automatically.
+        </p>
+        <p class="muted">
+          This is still a lab project, not a commercial product. The goal is to make the privacy model explicit and give
+          technically comfortable users a pattern they can adapt, not to claim that one setup is universally correct.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Status</h2>
+        <p class="muted">
+          I am cleaning up the code and documentation before making the repository public. Once it is ready, this page will
+          link to the repo and the README will point back here for the motivation, architecture, and tradeoffs.
+        </p>
+        <div class="lab-links">
+          <a class="btn" href="/labs/">Back to Labs</a>
+        </div>
+      </section>
+    </main>
+
+    <div id="site-footer"></div>
+  </div>
+
+  <script defer src="/assets/site.js"></script>
+</body>
+
+</html>
