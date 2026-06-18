@@ -456,3 +456,240 @@
   border: 1px solid rgba(255,255,255,0.10);
   line-height: 1.6;
 }
+
+/* ASCII steganography lab */
+.ascii-card {
+  overflow: hidden;
+}
+
+.ascii-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ascii-panel {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.025);
+}
+
+.ascii-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.ascii-panel-heading .eyebrow {
+  margin-bottom: 3px;
+}
+
+.ascii-panel-heading h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.ascii-badge {
+  flex: none;
+  padding: 5px 8px;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 999px;
+  color: var(--muted2);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.ascii-badge-encoded {
+  border-color: rgba(122,162,255,0.38);
+  color: #b9ccff;
+}
+
+.ascii-frame {
+  width: 100%;
+  max-height: 430px;
+  overflow: auto;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: #000;
+  text-align: center;
+  scrollbar-color: rgba(122,162,255,0.55) rgba(255,255,255,0.04);
+}
+
+.ascii-frame:focus-visible {
+  outline: 2px solid rgba(122,162,255,0.65);
+  outline-offset: 2px;
+}
+
+.ascii-art {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  color: #dce6ff;
+  background: #000;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 3.4px;
+  line-height: 4.1px;
+  font-weight: 700;
+  letter-spacing: 0;
+  white-space: pre;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ascii-art span {
+  position: relative;
+}
+
+.ascii-art span.steg-modified,
+.ascii-art span.steg-modified-source {
+  background: rgba(255, 94, 94, 0.82);
+  box-shadow: 0 0 0 0.5px rgba(255,255,255,0.82);
+}
+
+.ascii-art span.steg-modified-source {
+  background: rgba(122,162,255,0.72);
+}
+
+.ascii-caption {
+  margin: 14px 2px 0;
+  font-size: 13px;
+  color: var(--muted2);
+}
+
+.ascii-caption code,
+.steg-step code,
+.steg-example code {
+  color: #7aa2ff;
+}
+
+.steg-console-card h2,
+.steg-console-card p {
+  max-width: 760px;
+}
+
+.steg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 14px;
+}
+
+.steg-button {
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.steg-button:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.steg-output {
+  min-height: 150px;
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  border: 1px solid rgba(122,162,255,0.28);
+  border-radius: 14px;
+  color: #cbd8ff;
+  background: rgba(0,0,0,0.34);
+  font-family: "Courier New", Courier, monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.steg-output.is-success {
+  border-color: rgba(104,211,145,0.40);
+  color: #d8ffe5;
+}
+
+.steg-output.is-error {
+  border-color: rgba(248,113,113,0.45);
+  color: #ffd6d6;
+}
+
+.steg-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.steg-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.025);
+}
+
+.steg-step h3 {
+  margin: 0 0 7px;
+  font-size: 15px;
+}
+
+.steg-step p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.steg-step-number {
+  color: #7aa2ff;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.steg-example {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 13px 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  background: rgba(0,0,0,0.20);
+}
+
+.steg-note {
+  margin-bottom: 0;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .ascii-comparison,
+  .steg-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .ascii-frame {
+    max-height: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .ascii-panel {
+    padding: 10px;
+  }
+
+  .ascii-frame {
+    padding: 7px;
+  }
+
+  .ascii-art {
+    font-size: 2px;
+    line-height: 2.4px;
+  }
+}
