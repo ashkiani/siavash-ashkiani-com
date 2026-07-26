@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="author" content="Siavash Ashkiani" />
+  <meta name="description"
+    content="netwatch-rs is a lightweight Rust network activity monitor that keeps flows visible, adds process and passive DNS context, and can save buffered and live packets to PCAPNG." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://siavash.ashkiani.com/labs/privacy/netwatch-rs/" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <title>netwatch-rs Network Monitor · Labs</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/labs/assets/style.css" />
+</head>
+
+<body>
+  <div class="bg"></div>
+  <div class="page">
+    <div id="site-header"></div>
+
+    <main class="wrap">
+      <section class="card lab-hero">
+        <div class="crumbs">
+          <a href="/labs/">Labs</a> <span class="muted">/</span>
+          <a href="/labs/privacy/">Privacy</a> <span class="muted">/</span>
+          <span>netwatch-rs</span>
+        </div>
+
+        <p class="eyebrow">Network visibility · Rust · packet capture · PCAPNG</p>
+        <h1>netwatch-rs: watching the packets that enter and leave a computer</h1>
+        <p class="muted lead">
+          I wanted something between a temporary operating-system connection list and a full Wireshark capture:
+          a readable live dashboard that remembers ended flows and lets me capture the activity that happened
+          just before I noticed it.
+        </p>
+        <div class="lab-links">
+          <a class="btn" href="https://github.com/ashkiani/netwatch-rs" rel="noopener">View the repository →</a>
+          <a class="btn" href="https://github.com/ashkiani/netwatch-rs/releases" rel="noopener">Download a release →</a>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>The gap I was trying to fill</h2>
+        <p class="muted">
+          Windows Resource Monitor, <code>ss</code>, <code>netstat</code>, and similar tools can show active
+          connections, but the list may be difficult to interpret and short-lived entries disappear quickly.
+          An IP address, port, and process name are useful pieces, but they do not always provide a clear picture
+          when viewed separately.
+        </p>
+        <p class="muted">
+          Wireshark solves a different problem extremely well: it captures and decodes detailed packet data.
+          The tradeoff is volume. A full capture can grow quickly and leave you searching through much more data
+          than you needed to answer a simple question: what did this computer just talk to?
+        </p>
+        <p class="muted">
+          <code>netwatch-rs</code> is the middle ground I wanted. The current frontend is a terminal dashboard,
+          while the capture and accounting core is kept separate so a future desktop widget can reuse it.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>What the current release does</h2>
+        <ul class="feature-list">
+          <li>Captures visible IPv4, IPv6, TCP, UDP, ICMP, ICMPv6, ARP, and other packet types on selected interfaces.</li>
+          <li>Groups both directions of a conversation into one flow while keeping different local ports separate.</li>
+          <li>Shows rolling TX/RX totals for the last minute, hour, and 24 hours.</li>
+          <li>Keeps inactive flows visible for 24 hours and dims them instead of immediately removing them.</li>
+          <li>Adds best-effort process attribution for TCP and UDP sockets.</li>
+          <li>Learns hostnames passively from ordinary DNS replies without generating reverse-DNS traffic.</li>
+          <li>Keeps a bounded full-packet memory buffer for each observed flow.</li>
+          <li>Saves the selected flow's buffered history and matching live packets to a PCAPNG file.</li>
+          <li>Reports packets dropped by the application, capture driver, or interface.</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>Capturing what happened before I pressed Capture</h2>
+        <p class="muted">
+          A suspicious connection may be over by the time you decide to investigate it. Starting a normal capture
+          at that point preserves what happens next, but the DNS reply, handshake, or first exchange may already
+          be gone.
+        </p>
+        <pre class="code-block"><code>visible packet
+  → bidirectional flow
+  → rolling counters + bounded in-memory packet history
+  → press c
+  → buffered history + matching live packets → PCAPNG</code></pre>
+        <p class="muted">
+          By default, each flow can retain up to 1 MiB and all flow buffers together can retain up to 256 MiB.
+          The limits are configurable. Old packets or inactive flow buffers are evicted when necessary, and the
+          packet history disappears when the program exits.
+        </p>
+        <p class="muted">
+          Minute-level traffic totals and flow metadata are stored in SQLite so the rolling history can survive
+          a restart. Packet payloads are not stored in the database.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Design choices</h2>
+        <div class="callout-grid">
+          <div class="callout">
+            <div class="callout-title">One packet stream</div>
+            <p class="muted">
+              A packet is captured once and used for accounting, retrospective buffering, and an active selected-flow capture.
+            </p>
+          </div>
+          <div class="callout">
+            <div class="callout-title">Stable rows</div>
+            <p class="muted">
+              New flows appear at the top, but existing rows do not shuffle as traffic arrives and the highlight stays with the selected flow.
+            </p>
+          </div>
+          <div class="callout">
+            <div class="callout-title">Passive enrichment</div>
+            <p class="muted">
+              DNS names come from traffic already observed. Missing process or hostname information remains unknown rather than delaying packet accounting.
+            </p>
+          </div>
+          <div class="callout">
+            <div class="callout-title">Bounded memory</div>
+            <p class="muted">
+              Per-flow and global byte limits prevent the retrospective packet history from growing without control.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card subtle">
+        <h2>Why Rust?</h2>
+        <p class="muted">
+          A long-running packet monitor needs to be efficient, and C would have been an obvious option. I had also
+          wanted a real reason to learn Rust after hearing both the praise and criticism around it for several years.
+          This project—with packet buffers, capture workers, bounded queues, binary output, and shared state—felt
+          like the right test.
+        </p>
+        <p class="muted">
+          Rust's ownership rules made parts of the implementation more demanding, but they also forced memory
+          ownership and error handling to be explicit. For this kind of systems tool, I liked that tradeoff.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Important limits and privacy notes</h2>
+        <ul class="feature-list">
+          <li>
+            “Every packet” means every packet exposed by the operating system and capture driver on the selected
+            interfaces. VPNs, virtual switches, containers, hardware offload, and driver policy can affect the view.
+          </li>
+          <li>
+            Normal monitoring is non-promiscuous. It observes host traffic and ordinary broadcast/multicast traffic,
+            not unrelated conversations between other machines.
+          </li>
+          <li>
+            Process attribution is best-effort; a short-lived socket can close before the next operating-system snapshot.
+          </li>
+          <li>
+            DNS-over-HTTPS and DNS-over-TLS hide classic DNS replies, so some addresses will remain unnamed.
+          </li>
+          <li>
+            PCAPNG files may contain plaintext, credentials, or other private data. Review and sanitize captures before sharing them.
+          </li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>Project status</h2>
+        <p class="muted">
+          Version 0.1.0 is the first public release and currently supports Windows and Linux. Windows uses Npcap;
+          Linux uses libpcap and requires packet-capture permission. The release archives include checksums but do
+          not redistribute Npcap or libpcap.
+        </p>
+        <p class="muted">
+          This is an early-stage open-source project, not an intrusion-detection system. It does not decide whether
+          a connection is malicious. It provides a readable history and a quick way to preserve relevant packets
+          for deeper investigation.
+        </p>
+        <div class="lab-links">
+          <a class="btn" href="https://github.com/ashkiani/netwatch-rs" rel="noopener">GitHub: ashkiani/netwatch-rs →</a>
+          <a class="btn" href="https://github.com/ashkiani/netwatch-rs/releases" rel="noopener">Releases →</a>
+          <a class="btn" href="/labs/privacy/">Back to Privacy Lab</a>
+          <a class="btn" href="/labs/">Back to Labs</a>
+        </div>
+      </section>
+    </main>
+
+    <div id="site-footer"></div>
+  </div>
+
+  <script defer src="/assets/site.js"></script>
+</body>
+
+</html>
